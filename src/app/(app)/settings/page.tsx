@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Download, ShieldCheck, Trash2 } from "lucide-react";
+import { Download, KeyRound, ShieldCheck, Trash2 } from "lucide-react";
 
 
 type MemoryItem = { id: string; content: string; memoryType: string; createdAt: number | null };
@@ -17,6 +17,9 @@ export default function SettingsPage() {
   const [message, setMessage] = useState("");
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const loadMemory = useCallback(async () => {
     setLoadingMemory(true);
@@ -87,6 +90,36 @@ export default function SettingsPage() {
     }
   }
 
+  async function changePassword() {
+    setError("");
+    setMessage("");
+    if (newPassword.length < 8) {
+      setError("密码至少需要 8 位。");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("两次输入的密码不一致。");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: newPassword }),
+      });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(data.error || "密码更新失败");
+      setMessage("密码已更新。");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "密码更新失败");
+    } finally {
+      setChangingPassword(false);
+    }
+  }
+
   return (
       <main className="main-content">
         <div className="eyebrow">YOUR DATA, YOUR CONTROL</div>
@@ -146,6 +179,19 @@ export default function SettingsPage() {
               </div>
             </>
           )}
+        </section>
+
+        <section className="panel settings-card">
+          <h2><KeyRound size={17} /> 修改密码</h2>
+          <p className="record-body">当前已登录，可以直接设置新密码，不需要收邮件。忘记密码时请在登录页使用“忘记密码”。</p>
+          <label className="field-label" htmlFor="newPassword">新密码</label>
+          <input id="newPassword" className="field" type="password" autoComplete="new-password" minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="至少 8 位" />
+          <label className="field-label" htmlFor="confirmNewPassword">确认新密码</label>
+          <input id="confirmNewPassword" className="field" type="password" autoComplete="new-password" minLength={8} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="再输入一次" />
+          <button className="btn btn-primary" type="button" onClick={() => void changePassword()} disabled={changingPassword}>
+            <KeyRound size={15} />
+            {changingPassword ? "正在更新…" : "更新密码"}
+          </button>
         </section>
 
         <section className="panel settings-card settings-danger">

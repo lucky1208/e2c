@@ -7,7 +7,7 @@ import { ArrowRight, Sprout } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "reset">("signin");
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,6 +31,17 @@ export default function LoginPage() {
     setMessage("");
     setError("");
     try {
+      if (mode === "reset") {
+        const response = await fetch("/api/auth/reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const data = (await response.json().catch(() => ({}))) as { error?: string };
+        if (!response.ok) throw new Error(data.error || "重置邮件发送失败，请稍后重试。");
+        setMessage("如果这个邮箱已经注册，重置密码的邮件已经发送。请检查收件箱和垃圾箱。");
+        return;
+      }
       const endpoint = mode === "signup" ? "/api/auth/signup" : "/api/auth/login";
       const response = await fetch(endpoint, {
         method: "POST",
@@ -67,10 +78,14 @@ export default function LoginPage() {
         </div>
 
         <h1 className="page-heading" style={{ fontSize: 27, marginTop: 22 }}>
-          {mode === "signin" ? "欢迎回来" : "创建你的账户"}
+          {mode === "signin" ? "欢迎回来" : mode === "signup" ? "创建你的账户" : "重置密码"}
         </h1>
         <p className="page-lede" style={{ marginBottom: 20 }}>
-          {mode === "signin" ? "登录后继续你的英语练习和历史记录。" : "每个账户都有独立的学习记录、错题和词汇。"}
+          {mode === "signin"
+            ? "登录后继续你的英语练习和历史记录。"
+            : mode === "signup"
+              ? "每个账户都有独立的学习记录、错题和词汇。"
+              : "输入注册邮箱，我们会发送一封重置密码的邮件。"}
         </p>
 
         <form onSubmit={submit}>
@@ -82,10 +97,21 @@ export default function LoginPage() {
           )}
           <label className="field-label" htmlFor="email">邮箱</label>
           <input id="email" className="field" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
-          <label className="field-label" htmlFor="password">密码</label>
-          <input id="password" className="field" type="password" autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="至少 8 位" />
+          {mode !== "reset" && (
+            <>
+              <label className="field-label" htmlFor="password">密码</label>
+              <input id="password" className="field" type="password" autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="至少 8 位" />
+            </>
+          )}
+          {mode === "signin" && (
+            <div style={{ textAlign: "right", marginTop: 6 }}>
+              <button className="auth-link" type="button" onClick={() => { setMode("reset"); setError(""); setMessage(""); }}>
+                忘记密码？
+              </button>
+            </div>
+          )}
           <button className="btn btn-primary" style={{ width: "100%", marginTop: 4 }} disabled={busy}>
-            {busy ? "请稍候…" : mode === "signin" ? "登录" : "创建账户"}
+            {busy ? "请稍候…" : mode === "signin" ? "登录" : mode === "signup" ? "创建账户" : "发送重置邮件"}
             <ArrowRight size={15} />
           </button>
         </form>
@@ -94,9 +120,9 @@ export default function LoginPage() {
         {message && <p className="success-text">{message}</p>}
 
         <p className="inline-muted" style={{ marginTop: 18 }}>
-          {mode === "signin" ? "还没有账户？" : "已经有账户？"}
-          <button className="auth-link" type="button" onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(""); setMessage(""); }}>
-            {mode === "signin" ? "免费注册" : "返回登录"}
+          {mode === "reset" ? "想起密码了？" : mode === "signin" ? "还没有账户？" : "已经有账户？"}
+          <button className="auth-link" type="button" onClick={() => { setMode(mode === "reset" ? "signin" : mode === "signin" ? "signup" : "signin"); setError(""); setMessage(""); }}>
+            {mode === "reset" ? "返回登录" : mode === "signin" ? "免费注册" : "返回登录"}
           </button>
         </p>
         <p className="inline-muted" style={{ marginTop: 10 }}>
