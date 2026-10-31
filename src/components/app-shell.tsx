@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { BarChart3, BookMarked, BookOpen, LogOut, MessageCircle, RefreshCcw, Settings, Sprout } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AuthFrame } from "@/components/auth-frame";
 
 const nav = [
   { href: "/", label: "练习对话", icon: MessageCircle },
@@ -103,13 +104,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (!authReady) {
     return (
-      <div className="auth-wrap">
-        <div className="auth-card">
-          <div className="brand"><span className="brand-mark"><Sprout size={18} /></span><span>English Mate</span></div>
-          <p className="page-lede" style={{ marginTop: 20 }}>{accountError || "正在加载账户…"}</p>
-          <Link className="btn btn-primary" style={{ marginTop: 16 }} href="/login">前往登录</Link>
-        </div>
-      </div>
+      <AuthFrame variant="loading">
+        <section className="auth-card auth-card-glass auth-loading-card">
+          <span className="auth-card-eyebrow">
+            <span className="auth-card-pulse" />
+            {accountError ? "CONNECTION ISSUE" : "SYNCING YOUR SPACE"}
+          </span>
+          <div className="auth-loading-orbit"><Sprout size={28} /></div>
+          <h1 className="auth-card-title">{accountError ? "暂时无法连接" : "正在加载你的学习空间"}</h1>
+          <p className="auth-card-lede">{accountError || "正在同步账户与学习记录，稍等片刻…"}</p>
+          {!accountError && <div className="auth-loading-bar" aria-hidden="true"><span /></div>}
+          {!accountError && <p className="auth-loading-hint">首次加载可能需要几秒钟</p>}
+          {accountError ? (
+            <Link className="auth-submit" href="/login">前往登录</Link>
+          ) : (
+            <Link className="auth-text-link" href="/login">遇到问题？前往登录</Link>
+          )}
+        </section>
+      </AuthFrame>
     );
   }
 

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
-import { ArrowRight, KeyRound, Sprout } from "lucide-react";
+import { ArrowRight, KeyRound, LockKeyhole, ShieldCheck } from "lucide-react";
+import { AuthFrame } from "@/components/auth-frame";
 
 export default function ResetPasswordPage() {
   const [checking, setChecking] = useState(true);
@@ -52,58 +53,91 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="auth-wrap">
-      <section className="auth-card">
-        <div className="brand" style={{ padding: 0 }}>
-          <span className="brand-mark"><Sprout size={18} /></span>
-          <span>English Mate</span>
+    <AuthFrame>
+      <section className="auth-card auth-card-glass">
+        <div className="auth-card-top">
+          <span className="auth-card-eyebrow"><span className="auth-card-pulse" /> ACCOUNT RECOVERY</span>
+          <span className="auth-card-secure"><ShieldCheck size={13} /> 安全连接</span>
         </div>
 
-        <h1 className="page-heading" style={{ fontSize: 27, marginTop: 22 }}>
-          {message ? "密码已更新" : "设置新密码"}
+        <h1 className="auth-card-title" style={{ marginTop: 24 }}>
+          {message ? "密码已更新" : !checking && !valid ? "重置链接已失效" : "设置新密码"}
         </h1>
 
-        {checking && <p className="page-lede">正在验证重置链接…</p>}
+        {checking && <p className="auth-card-lede">正在验证重置链接…</p>}
 
         {!checking && !valid && (
           <>
-            <p className="page-lede">重置链接无效或已过期，请重新申请。</p>
-            <Link className="btn btn-primary" href="/login" style={{ width: "100%", marginTop: 8 }}>
+            <p className="auth-card-lede">重置链接无效或已过期，请重新申请。</p>
+            <Link className="auth-submit" href="/login">
               返回登录
-              <ArrowRight size={15} />
+              <ArrowRight size={16} />
             </Link>
           </>
         )}
 
         {!checking && valid && !message && (
-          <form onSubmit={submit}>
-            <p className="page-lede" style={{ marginBottom: 18 }}>请输入一个新的登录密码。</p>
-            <label className="field-label" htmlFor="newPassword">新密码</label>
-            <input id="newPassword" className="field" type="password" autoComplete="new-password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="至少 8 位" />
-            <label className="field-label" htmlFor="confirmPassword">确认新密码</label>
-            <input id="confirmPassword" className="field" type="password" autoComplete="new-password" minLength={8} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="再输入一次" />
-            <button className="btn btn-primary" style={{ width: "100%", marginTop: 8 }} disabled={busy}>
-              <KeyRound size={15} />
+          <form onSubmit={submit} className="auth-form">
+            <p className="auth-card-lede">请输入一个新的登录密码。</p>
+            <div className="auth-field">
+              <label className="auth-field-label" htmlFor="newPassword">新密码</label>
+              <div className="auth-input-wrap">
+                <LockKeyhole size={16} className="auth-input-icon" />
+                <input
+                  id="newPassword"
+                  className="auth-input auth-input-solo"
+                  type="password"
+                  autoComplete="new-password"
+                  minLength={8}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="至少 8 位"
+                />
+              </div>
+            </div>
+            <div className="auth-field">
+              <label className="auth-field-label" htmlFor="confirmPassword">确认新密码</label>
+              <div className="auth-input-wrap">
+                <LockKeyhole size={16} className="auth-input-icon" />
+                <input
+                  id="confirmPassword"
+                  className="auth-input auth-input-solo"
+                  type="password"
+                  autoComplete="new-password"
+                  minLength={8}
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="再输入一次"
+                />
+              </div>
+            </div>
+            <button className="auth-submit" type="submit" disabled={busy} aria-busy={busy}>
+              <KeyRound size={16} />
               {busy ? "正在更新…" : "更新密码"}
             </button>
           </form>
         )}
 
-        {error && <p className="error-text">{error}</p>}
+        {error && <p className="auth-message auth-message-error" role="alert">{error}</p>}
+
         {message && (
           <>
-            <p className="success-text">{message}现在可以继续使用你的账户。</p>
-            <Link className="btn btn-primary" href="/" style={{ width: "100%", marginTop: 8 }}>
+            <p className="auth-message auth-message-success" role="status">{message}现在可以继续使用你的账户。</p>
+            <Link className="auth-submit" href="/">
               进入应用
-              <ArrowRight size={15} />
+              <ArrowRight size={16} />
             </Link>
           </>
         )}
 
-        <p className="inline-muted" style={{ marginTop: 18 }}>
-          <Link href="/login" className="auth-link">返回登录</Link>
-        </p>
+        {!checking && valid && !message && (
+          <p className="auth-switch">
+            <Link href="/login" className="auth-link">返回登录</Link>
+          </p>
+        )}
       </section>
-    </main>
+    </AuthFrame>
   );
 }
