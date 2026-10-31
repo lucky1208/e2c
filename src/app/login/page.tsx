@@ -39,7 +39,7 @@ export default function LoginPage() {
         });
         const data = (await response.json().catch(() => ({}))) as { error?: string };
         if (!response.ok) throw new Error(data.error || "重置邮件发送失败，请稍后重试。");
-        setMessage("如果这个邮箱已经注册，重置密码的邮件已经发送。请检查收件箱和垃圾箱。");
+        setMessage("如果这个邮箱已经注册，重置密码邮件会尝试发送。若长时间收不到，说明邮件服务尚未配置；登录后可在“设置”中直接修改密码。");
         return;
       }
       const endpoint = mode === "signup" ? "/api/auth/signup" : "/api/auth/login";
