@@ -26,6 +26,12 @@ export async function POST(request: Request) {
       },
     });
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    if (data.user?.identities?.length === 0) {
+      return NextResponse.json(
+        { error: "该邮箱已注册。请直接登录；若未收到确认邮件，请在 Supabase 后台手动确认或重置密码。" },
+        { status: 409 },
+      );
+    }
     return NextResponse.json({ ok: true, needsConfirmation: !data.session });
   } catch (error) {
     console.error("auth signup failed", error instanceof Error ? error.message : "unknown");
