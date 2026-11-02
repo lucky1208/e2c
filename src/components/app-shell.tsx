@@ -21,8 +21,6 @@ type Account = {
   displayName: string;
   avatarUrl: string | null;
   usedTokens: number;
-  usedPromptTokens: number;
-  usedCompletionTokens: number;
   usedAudioSeconds: number;
   balanceCents: number;
 };
@@ -55,13 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       const data = (await response.json()) as {
         user: { id: string; email: string | null };
         profile?: { display_name?: string; avatar_url?: string | null } | null;
-        billing?: {
-          used_tokens?: number;
-          used_prompt_tokens?: number;
-          used_completion_tokens?: number;
-          used_audio_seconds?: number;
-          balance_cents?: number;
-        } | null;
+        billing?: { used_tokens?: number; used_audio_seconds?: number; balance_cents?: number } | null;
       };
       setAccount({
         id: data.user.id,
@@ -69,8 +61,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         displayName: data.profile?.display_name ?? "",
         avatarUrl: data.profile?.avatar_url ?? null,
         usedTokens: Number(data.billing?.used_tokens ?? 0),
-        usedPromptTokens: Number(data.billing?.used_prompt_tokens ?? 0),
-        usedCompletionTokens: Number(data.billing?.used_completion_tokens ?? 0),
         usedAudioSeconds: Number(data.billing?.used_audio_seconds ?? 0),
         balanceCents: Number(data.billing?.balance_cents ?? 0),
       });
@@ -153,11 +143,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {accountOpen && (
             <div className="account-menu">
               <div className="account-email">{account?.email || "已登录"}</div>
-              <div className="account-row"><span>累计 Token</span><strong>{account ? account.usedTokens.toLocaleString() : "—"} tokens</strong></div>
-              {account && account.usedTokens > 0 ? <div className="account-row"><span>输入 / 输出</span><strong>{account.usedPromptTokens.toLocaleString()} / {account.usedCompletionTokens.toLocaleString()}</strong></div> : null}
+              <div className="account-row"><span>已用流量</span><strong>{account ? account.usedTokens.toLocaleString() : "—"} tokens</strong></div>
               <div className="account-row"><span>充值余额</span><strong>{account ? `¥${(account.balanceCents / 100).toFixed(2)}` : "—"}</strong></div>
               {account?.usedAudioSeconds ? <div className="account-row"><span>语音时长</span><strong>{Math.round(account.usedAudioSeconds / 60)} 分钟</strong></div> : null}
-              <Link className="account-usage-link" href="/settings#usage" onClick={() => setAccountOpen(false)}>查看 Token 用量明细</Link>
               <div className="account-actions">
                 <button className="btn btn-small" type="button" disabled title="在线充值即将开放">充值</button>
                 <Link className="btn btn-small" href="/settings" onClick={() => setAccountOpen(false)}>数据与设置</Link>

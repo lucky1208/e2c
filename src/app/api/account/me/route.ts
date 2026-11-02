@@ -19,7 +19,7 @@ export async function GET() {
       .maybeSingle(),
     supabase
       .from("billing_accounts")
-      .select("balance_cents,used_tokens,used_prompt_tokens,used_completion_tokens,used_audio_seconds")
+      .select("balance_cents,used_tokens,used_audio_seconds")
       .eq("user_id", user.id)
       .maybeSingle(),
   ]);
@@ -27,12 +27,6 @@ export async function GET() {
   return NextResponse.json({
     user: { id: user.id, email: user.email ?? null },
     profile: profileResult.data ?? { display_name: "", avatar_url: null, chat_background_url: null },
-    billing: billingResult.data ?? {
-      balance_cents: 0,
-      used_tokens: 0,
-      used_prompt_tokens: 0,
-      used_completion_tokens: 0,
-      used_audio_seconds: 0,
-    },
+    billing: billingResult.data ?? { balance_cents: 0, used_tokens: 0, used_audio_seconds: 0 },
   });
 }

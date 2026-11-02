@@ -3,35 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BarChart3, Download, KeyRound, ShieldCheck, Trash2 } from "lucide-react";
+import { Download, KeyRound, ShieldCheck, Trash2 } from "lucide-react";
 
 
 type MemoryItem = { id: string; content: string; memoryType: string; createdAt: number | null };
 type MemoryData = { configured: boolean; memories: MemoryItem[]; total: number; error?: string };
-type UsageEvent = {
-  feature: string;
-  model: string | null;
-  prompt_tokens: number;
-  completion_tokens: number;
-  total_tokens: number;
-  audio_seconds: number;
-  created_at: string;
-};
-type UsageData = {
-  totals: { totalTokens: number; promptTokens: number; completionTokens: number; audioSeconds: number };
-  byFeature: { feature: string; requests: number; totalTokens: number; promptTokens: number; completionTokens: number }[];
-  recent: UsageEvent[];
-};
-
-function featureLabel(feature: string) {
-  const labels: Record<string, string> = {
-    chat: "对话",
-    summary: "会话总结",
-    voice: "语音",
-    correction: "纠错",
-  };
-  return labels[feature] ?? feature;
-}
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -44,9 +20,6 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
-  const [usage, setUsage] = useState<UsageData | null>(null);
-  const [loadingUsage, setLoadingUsage] = useState(true);
-  const [usageError, setUsageError] = useState("");
 
   const loadMemory = useCallback(async () => {
     setLoadingMemory(true);
@@ -63,22 +36,7 @@ export default function SettingsPage() {
     }
   }, []);
 
-  const loadUsage = useCallback(async () => {
-    setLoadingUsage(true);
-    setUsageError("");
-    try {
-      const response = await fetch("/api/account/usage", { cache: "no-store" });
-      const data = (await response.json()) as UsageData & { error?: string };
-      if (!response.ok) throw new Error(data.error || "读取 Token 用量失败");
-      setUsage(data);
-    } catch (e) {
-      setUsageError(e instanceof Error ? e.message : "读取 Token 用量失败");
-    } finally {
-      setLoadingUsage(false);
-    }
-  }, []);
-
-  useEffect(() => { void loadMemory(); void loadUsage(); }, [loadMemory, loadUsage]);
+  useEffect(() => { void loadMemory(); }, [loadMemory]);
 
   async function deleteMemory(id: string) {
     if (!window.confirm("确定删除这条长期记忆吗？此操作不可恢复。")) return;
@@ -190,56 +148,6 @@ export default function SettingsPage() {
             </div>
           </section>
         </div>
-
-        <section className="panel settings-card settings-usage" id="usage">
-          <h2><BarChart3 size={17} /> Token 用量</h2>
-          <p className="record-body">按账户累计统计所有 AI 请求消耗的 Token。数据从本次更新后开始记录，历史对话不追溯。</p>
-          {loadingUsage && <p className="record-body">正在读取…</p>}
-          {!loadingUsage && usageError && <p className="error-text">{usageError}</p>}
-          {!loadingUsage && usage && (
-            <>
-              <div className="stats-grid usage-stats">
-                <div className="stat-card">
-                  <div className="stat-value">{usage.totals.totalTokens.toLocaleString()}</div>
-                  <div className="stat-label">总 Token</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-value">{usage.totals.promptTokens.toLocaleString()}</div>
-                  <div className="stat-label">输入 Token</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-value">{usage.totals.completionTokens.toLocaleString()}</div>
-                  <div className="stat-label">输出 Token</div>
-                </div>
-              </div>
-              {usage.byFeature.length > 0 && (
-                <div className="usage-feature-list">
-                  <div className="inline-muted">按功能（最近记录）</div>
-                  {usage.byFeature.map((item) => (
-                    <div className="account-row" key={item.feature}>
-                      <span>{featureLabel(item.feature)} · {item.requests} 次</span>
-                      <strong>{item.totalTokens.toLocaleString()} tokens</strong>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {usage.totals.audioSeconds > 0 && (
-                <p className="inline-muted">语音时长：{Math.round(usage.totals.audioSeconds / 60)} 分钟</p>
-              )}
-              {usage.recent.length > 0 && (
-                <div className="usage-recent">
-                  <div className="inline-muted">最近请求</div>
-                  {usage.recent.slice(0, 5).map((event, index) => (
-                    <div className="usage-recent-row" key={`${event.created_at}-${index}`}>
-                      <span>{featureLabel(event.feature)} · {new Date(event.created_at).toLocaleString()}</span>
-                      <strong>{event.total_tokens.toLocaleString()} tokens</strong>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-        </section>
 
         <section className="panel settings-card settings-memory">
           <h2>百炼长期记忆</h2>

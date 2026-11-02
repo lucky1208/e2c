@@ -83,22 +83,7 @@ export async function POST(request: Request) {
     const content = response.choices[0]?.message?.content;
     if (!content) throw new Error("模型没有返回可用内容");
     const result = parseTutorResult(content);
-    const promptTokens = response.usage?.prompt_tokens ?? 0;
-    const completionTokens = response.usage?.completion_tokens ?? 0;
-    const totalTokens = response.usage?.total_tokens ?? promptTokens + completionTokens;
-    try {
-      const { error: usageError } = await supabase.rpc("record_usage_breakdown", {
-        p_feature: "chat",
-        p_model: getTextModel(),
-        p_prompt_tokens: promptTokens,
-        p_completion_tokens: completionTokens,
-        p_total_tokens: totalTokens,
-        p_audio_seconds: 0,
-      });
-      if (usageError) console.error("usage tracking failed", usageError.message);
-    } catch (error) {
-      console.error("usage tracking failed", error instanceof Error ? error.message : "unknown");
-    }
+    const totalTokens = response.usage?.total_tokens ?? 0;
 
     const { data: assistantMessage, error: assistantInsertError } = await supabase
       .from("messages")
@@ -152,6 +137,11 @@ export async function POST(request: Request) {
     await supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId).eq("user_id", user.id);
     after(async () => {
       const summaryConversationId = conversationId;
+      try {
+        await supabase.rpc("record_usage", { p_tokens: totalTokens, p_audio_seconds: 0 });
+      } catch (error) {
+        console.error("usage tracking failed", error instanceof Error ? error.message : "unknown");
+      }
       await addBailianMemory(user.id, [
         { role: "user", content: input.data.message },
         { role: "assistant", content: result.reply },
