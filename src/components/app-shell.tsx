@@ -133,6 +133,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="main-column">
       <header className="topbar">
         <div className="topbar-title">{title}</div>
+        <div className="topbar-copyright">Copyright@Lu 15026953905</div>
         <div className="account-wrap" ref={menuRef}>
           <button className="account-avatar" type="button" aria-label="账户信息" onClick={() => { setAccountOpen((open) => !open); void loadAccount(); }}>
             {account?.avatarUrl

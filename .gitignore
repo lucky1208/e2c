@@ -10,4 +10,6 @@ dist/
 *.tsbuildinfo
 *.log
 *.zip
-.DS_Storebackups/
+.DS_Store
+backups/
+supabase/import-*.sql

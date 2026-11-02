@@ -7,5 +7,12 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="zh-CN"><body>{children}</body></html>;
+  return (
+    <html lang="zh-CN">
+      <body>
+        <div className="copyright-bar">Copyright@Lu 15026953905</div>
+        {children}
+      </body>
+    </html>
+  );
 }
