@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, BookOpen, CheckCircle2, RefreshCcw, Volume2 } from "lucide-react";
 import { formatReviewInterval, scheduleReview } from "@/lib/review";
+import { speakEnglish } from "@/lib/speech";
 
 type ReviewItem = {
   id: string;
@@ -28,15 +29,6 @@ type ReviewData = {
     reviewedToday: number;
   };
 };
-
-function speak(text: string) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window) || !text.trim()) return;
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
-  utterance.rate = 0.9;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utterance);
-}
 
 const QUALITY_OPTIONS = [
   { quality: 1, label: "忘了", hint: "重新开始" },
@@ -169,7 +161,7 @@ export default function ReviewPage() {
                 <div className="review-front-row">
                   <div className="review-front">{item.front}</div>
                   {item.itemType === "vocabulary" && (
-                    <button className="btn btn-small" type="button" aria-label="朗读单词" onClick={() => speak(item.front)}>
+                    <button className="btn btn-small" type="button" aria-label="朗读单词" onClick={() => speakEnglish(item.front)}>
                       <Volume2 size={14} />
                       发音
                     </button>
@@ -194,7 +186,7 @@ export default function ReviewPage() {
                     {item.example && (
                       <div className="review-example-row">
                         <div className="review-example">Example: {item.example}</div>
-                        <button className="btn btn-small" type="button" aria-label="朗读例句" onClick={() => speak(item.example)}>
+                        <button className="btn btn-small" type="button" aria-label="朗读例句" onClick={() => speakEnglish(item.example)}>
                           <Volume2 size={14} />
                           发音
                         </button>

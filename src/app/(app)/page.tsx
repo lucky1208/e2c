@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { BookOpen, Bot, History, Mic, MicOff, PhoneOff, Plus, Send, Settings, Sparkles, Trash2, Volume2, X } from "lucide-react";
+import { speakEnglish } from "@/lib/speech";
 
 
 type Correction = {
@@ -33,13 +34,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function speak(text: string) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window) || !text.trim()) return;
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
-  utterance.rate = 0.95;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utterance);
+function countValue(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
 }
 
 function waitForIceComplete(pc: RTCPeerConnection, timeoutMs = 15_000) {
@@ -72,7 +68,7 @@ function CorrectionCard({ correction }: { correction: Correction }) {
       {correction.explanationZh && <div className="correction-explain">{correction.explanationZh}</div>}
       <div className="correction-actions">
         {correction.errorTypes.filter((type) => type !== "none").map((type) => <span className="pill" key={type}>{type}</span>)}
-        <button className="btn btn-small" type="button" aria-label="朗读正确表达" onClick={() => speak(correction.correctedText)}>
+        <button className="btn btn-small" type="button" aria-label="朗读正确表达" onClick={() => speakEnglish(correction.correctedText)}>
           <Volume2 size={13} />
           听
         </button>
@@ -451,6 +447,21 @@ export default function HomePage() {
     }
   }, []);
 
+  const saveVoiceUsage = useCallback(async (promptTokens: number, completionTokens: number, totalTokens: number) => {
+    const conversationId = conversationIdRef.current;
+    if (!conversationId || totalTokens <= 0) return;
+    try {
+      const response = await fetch("/api/voice/usage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId, promptTokens, completionTokens, totalTokens, audioSeconds: 0 }),
+      });
+      if (response.ok) window.dispatchEvent(new Event("english-mate:account-updated"));
+    } catch {
+      // Text turns can still be saved even if usage reporting is temporarily unavailable.
+    }
+  }, []);
+
   async function startVoice() {
     if (voiceActive || voiceStarting) return;
     const sessionId = voiceSessionIdRef.current + 1;
@@ -642,6 +653,17 @@ export default function HomePage() {
 
           if (type === "response.done") {
             const responseObject = isRecord(realtimeEvent.response) ? realtimeEvent.response : null;
+            const usage = responseObject && isRecord(responseObject.usage)
+              ? responseObject.usage
+              : isRecord(realtimeEvent.usage)
+                ? realtimeEvent.usage
+                : null;
+            if (usage) {
+              const promptTokens = countValue(usage.input_tokens ?? usage.prompt_tokens);
+              const completionTokens = countValue(usage.output_tokens ?? usage.completion_tokens);
+              const totalTokens = Math.max(countValue(usage.total_tokens), promptTokens + completionTokens);
+              void saveVoiceUsage(promptTokens, completionTokens, totalTokens);
+            }
             const status = responseObject && typeof responseObject.status === "string" ? responseObject.status : "";
             const output = responseObject && Array.isArray(responseObject.output) ? responseObject.output : [];
             if (status !== "cancelled") {
@@ -790,7 +812,7 @@ export default function HomePage() {
                   <div className="message-body">
                     <div className="bubble">{message.content}</div>
                     {message.role === "assistant" && (
-                      <button className="btn btn-small speak-message" type="button" aria-label="朗读这条回答" onClick={() => speak(message.content)}>
+                      <button className="btn btn-small speak-message" type="button" aria-label="朗读这条回答" onClick={() => speakEnglish(message.content)}>
                         <Volume2 size={14} />
                         发音
                       </button>

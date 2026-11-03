@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { BookOpen, Plus, RefreshCcw, Trash2, Volume2 } from "lucide-react";
+import { speakEnglish } from "@/lib/speech";
 
 type Word = {
   id: string;
@@ -13,15 +14,6 @@ type Word = {
   next_review_at: string | null;
   created_at: string;
 };
-
-function speak(text: string) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
-  utterance.rate = 0.9;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utterance);
-}
 
 export default function VocabularyPage() {
   const [items, setItems] = useState<Word[]>([]);
@@ -109,7 +101,7 @@ export default function VocabularyPage() {
                 <div className="record-title" style={{ marginBottom: 0 }}>{item.word}</div>
                 <div className="record-inline-actions">
                   <span className="pill">掌握 {item.mastery_level}/5</span>
-                  <button className="btn btn-small" type="button" aria-label={`朗读 ${item.word}`} onClick={() => speak(item.word)}>
+                  <button className="btn btn-small" type="button" aria-label={`朗读 ${item.word}`} onClick={() => speakEnglish(item.word)}>
                     <Volume2 size={14} />
                     发音
                   </button>
@@ -122,7 +114,7 @@ export default function VocabularyPage() {
               {item.example && (
                 <div className="record-example-row">
                   <div className="record-example">{item.example}</div>
-                  <button className="btn btn-small" type="button" aria-label="朗读例句" onClick={() => speak(item.example)}>
+                  <button className="btn btn-small" type="button" aria-label="朗读例句" onClick={() => speakEnglish(item.example)}>
                     <Volume2 size={14} />
                     发音
                   </button>

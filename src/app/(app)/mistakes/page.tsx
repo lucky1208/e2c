@@ -3,15 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CheckCheck, BookMarked, RefreshCcw, Volume2 } from "lucide-react";
-
-function speak(text: string) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window) || !text.trim()) return;
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
-  utterance.rate = 0.9;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utterance);
-}
+import { speakEnglish } from "@/lib/speech";
 
 type Mistake = {
   id: string;
@@ -78,7 +70,7 @@ export default function MistakesPage() {
               <div className="record-body record-wrong">{item.original_text}</div>
               <div className="record-correct-row">
                 <div className="record-title record-right">{item.corrected_text}</div>
-                <button className="btn btn-small" type="button" aria-label="朗读纠正后的句子" onClick={() => speak(item.corrected_text)}>
+                <button className="btn btn-small" type="button" aria-label="朗读纠正后的句子" onClick={() => speakEnglish(item.corrected_text)}>
                   <Volume2 size={14} />
                   发音
                 </button>
